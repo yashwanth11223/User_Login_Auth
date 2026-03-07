@@ -1,4 +1,4 @@
-import connectDB from "@/lib/mongodb"
+import {connectDB} from "@/lib/mongodb"
 import bcrypt from "bcryptjs"
 import { NextResponse } from "next/server"
 import Users from "@/models/User"
