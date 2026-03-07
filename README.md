@@ -207,6 +207,8 @@ NEXTAUTH_URL=http://localhost:3000
 
 EMAIL_USER=your_email
 EMAIL_PASS=your_email_password
+
+Access youtube
 ```
 ---
 
