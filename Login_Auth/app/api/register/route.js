@@ -1,4 +1,4 @@
-import {connectDB} from "@/lib/mongodb"
+import { connectDB } from "@/lib/mongodb"
 import bcrypt from "bcryptjs"
 import { NextResponse } from "next/server"
 import Users from "@/models/User"
@@ -7,11 +7,11 @@ export async function POST(req){
 
   try{
 
-    const { email, password } = await req.json()
+    const { name, email, password } = await req.json()
 
-    if(!email || !password){
+    if(!name || !email || !password){
       return NextResponse.json(
-        { error:"Email and password required" },
+        { error:"All fields required" },
         { status:400 }
       )
     }
@@ -30,6 +30,7 @@ export async function POST(req){
     const hashedPassword = await bcrypt.hash(password,10)
 
     await Users.create({
+      name,
       email,
       password: hashedPassword
     })

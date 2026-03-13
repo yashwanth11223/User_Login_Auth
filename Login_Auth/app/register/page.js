@@ -2,86 +2,105 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
-export default function Register() {
+export default function Register(){
 
   const router = useRouter()
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [name,setName] = useState("")
+  const [email,setEmail] = useState("")
+  const [password,setPassword] = useState("")
+  const [loading,setLoading] = useState(false)
 
-  const handleRegister = async (e) => {
+  const handleRegister = async(e)=>{
+
     e.preventDefault()
-
     setLoading(true)
 
-    try {
+    try{
 
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
+      const res = await fetch("/api/register",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
         },
-        body: JSON.stringify({ email, password })
+        body:JSON.stringify({name,email,password})
       })
 
-      let data = {}
-
-      try {
-        data = await res.json()
-      } catch (err) {
-        console.log("No JSON returned from API")
-      }
-
-      if (res.ok) {
+      if(res.ok){
         alert("Account created successfully")
         router.push("/login")
-      } else {
-        alert(data.error || "Registration failed")
+      }else{
+        alert("Registration failed")
       }
 
-    } catch (error) {
-      console.log(error)
+    }catch(error){
       alert("Something went wrong")
     }
 
     setLoading(false)
   }
 
-  return (
-    <div className="login-container">
+  return(
 
-      <div className="login-card">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100">
 
-        <h2>Create Account</h2>
+      <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
 
-        <form onSubmit={handleRegister}>
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+          Create Account
+        </h2>
+
+        <form onSubmit={handleRegister} className="space-y-4">
+
+          <input
+            type="text"
+            placeholder="Enter name"
+            value={name}
+            onChange={(e)=>setName(e.target.value)}
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-400"
+            required
+          />
 
           <input
             type="email"
             placeholder="Enter email"
             value={email}
+            onChange={(e)=>setEmail(e.target.value)}
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-400"
             required
-            onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
             type="password"
             placeholder="Enter password"
             value={password}
+            onChange={(e)=>setPassword(e.target.value)}
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-400"
             required
-            onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button type="submit" disabled={loading}>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
+          >
             {loading ? "Creating..." : "Register"}
           </button>
 
         </form>
 
+        <p className="text-center text-sm text-gray-600 mt-4">
+          Already have an account?{" "}
+          <Link href="/login" className="text-indigo-600 font-semibold">
+            Login
+          </Link>
+        </p>
+
       </div>
 
     </div>
+
   )
 }

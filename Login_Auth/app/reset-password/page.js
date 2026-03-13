@@ -27,9 +27,9 @@ export default function ResetPassword(){
     const data = await res.json()
 
     if(res.ok){
+
       setMsg("Password updated successfully")
 
-      // redirect after 2 seconds
       setTimeout(()=>{
         router.push("/login")
       },2000)

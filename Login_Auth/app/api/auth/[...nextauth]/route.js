@@ -1,13 +1,31 @@
-import NextAuth from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
-import {connectDB} from "@/lib/mongodb"
-import Users from "@/models/User"
-import bcrypt from "bcryptjs"
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import GitHubProvider from "next-auth/providers/github";
+import { connectDB } from "@/lib/mongodb";
+import Users from "@/models/User";
+import bcrypt from "bcryptjs";
 
-const handler = NextAuth({
+export const authOptions = {
+
   providers: [
+
+    // GOOGLE LOGIN
+    GoogleProvider({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET
+    }),
+
+    // GITHUB LOGIN
+    GitHubProvider({
+      clientId: process.env.GITHUB_ID,
+      clientSecret: process.env.GITHUB_SECRET
+    }),
+
+    // EMAIL + PASSWORD LOGIN
     CredentialsProvider({
       name: "Credentials",
+
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
@@ -15,44 +33,97 @@ const handler = NextAuth({
 
       async authorize(credentials) {
 
-        const email = credentials?.email
-        const password = credentials?.password
+        const email = credentials?.email;
+        const password = credentials?.password;
 
         if (!email || !password) {
-          return null
+          throw new Error("Missing email or password");
         }
 
-        await connectDB()
+        await connectDB();
 
-        const user = await Users.findOne({ email })
+        const user = await Users.findOne({ email });
 
         if (!user) {
-          return null
+          throw new Error("User not found");
         }
 
-        const isMatch = await bcrypt.compare(password, user.password)
+        const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-          return null
+          throw new Error("Invalid password");
         }
 
         return {
           id: user._id.toString(),
-          email: user.email
-        }
+          email: user.email,
+          name: user.name || "User"
+        };
       }
     })
+
   ],
 
-  session:{
-    strategy:"jwt"
+  callbacks: {
+
+    async signIn({ user, account }) {
+
+      if (account.provider === "google" || account.provider === "github") {
+
+        await connectDB();
+
+        const existingUser = await Users.findOne({
+          email: user.email
+        });
+
+        if (!existingUser) {
+          return false;
+        }
+
+        // Ensure name exists for OAuth users
+        user.name = existingUser.name || user.name || "User";
+      }
+
+      return true;
+    },
+
+    // Store user info inside JWT
+    async jwt({ token, user }) {
+
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+      }
+
+      return token;
+    },
+
+    // Send user info to session
+    async session({ session, token }) {
+
+      if (session?.user) {
+        session.user.id = token.id;
+        session.user.name = token.name || "User";
+        session.user.email = token.email;
+      }
+
+      return session;
+    }
+
   },
 
-  pages:{
-    signIn:"/login"
+  session: {
+    strategy: "jwt"
+  },
+
+  pages: {
+    signIn: "/login"
   },
 
   secret: process.env.NEXTAUTH_SECRET
-})
+};
 
-export { handler as GET, handler as POST }
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };
